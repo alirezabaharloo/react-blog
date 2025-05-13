@@ -1,6 +1,5 @@
 # News Portal
 
-![News Portal](https://via.placeholder.com/1200x300/0d6efd/FFFFFF?text=News+Portal)
 
 A modern, responsive news portal built with React and Node.js, featuring beautiful animations, user authentication, article search, and category browsing.
 
@@ -20,11 +19,7 @@ News Portal is a full-stack web application that offers users a seamless experie
 - 📄 Article detail pages
 
 ### Backend
-- 🔐 Secure user authentication and authorization
-- 🔍 Full-text search for articles
-- 📊 Categories and tagging system
-- 💾 MongoDB database for content storage
-- 🔄 RESTful API endpoints
+- 📊 Category and article system
 
 ## 🚀 Getting Started
 
@@ -33,8 +28,7 @@ This project consists of two parts: the frontend (React) and the backend (Node.j
 ### Prerequisites
 
 - Node.js (v14.0 or higher)
-- npm or yarn
-- MongoDB
+
 
 ## 🔧 Installation & Setup
 
@@ -51,16 +45,10 @@ This project consists of two parts: the frontend (React) and the backend (Node.j
    npm install
    ```
 
-3. Create a `.env` file in the backend directory with the following variables:
-   ```
-   PORT=8000
-   MONGODB_URI=mongodb://localhost:27017/news-portal
-   JWT_SECRET=your_jwt_secret_key
-   ```
 
-4. Start the backend server
+3. Start the backend server
    ```bash
-   npm run dev
+   node index.js
    ```
    The server will start on http://localhost:8000
 
@@ -100,23 +88,6 @@ This project consists of two parts: the frontend (React) and the backend (Node.j
    - Click on any article card to read the full content
    - Navigate through related articles at the bottom of each article
 
-### As a Registered User
-
-1. **Create an Account**
-   - Click on "Register" in the navigation bar
-   - Fill out the username in the first step
-   - Create and confirm your password in the second step
-   - Submit the form to create your account
-
-2. **Log In**
-   - Click on "Login" in the navigation bar
-   - Enter your username and password
-   - Click "Sign In" to access your account
-
-3. **Personalized Experience** (Coming Soon)
-   - Save favorite articles
-   - Get personalized article recommendations
-   - Comment on articles and engage with the community
 
 ## 🧑‍💻 Developer Guide
 
@@ -144,13 +115,10 @@ news-portal/
 
 | Endpoint                    | Method | Description                     |
 |-----------------------------|--------|---------------------------------|
-| `/api/auth/register`        | POST   | Register a new user             |
-| `/api/auth/login`           | POST   | Authenticate a user             |
-| `/api/articles`             | GET    | Get all articles                |
-| `/api/articles/:id`         | GET    | Get article by ID               |
-| `/api/articles/search`      | GET    | Search articles                 |
-| `/api/categories`           | GET    | Get all categories              |
-| `/api/categories/:id`       | GET    | Get articles by category        |
+| `/articles`             | GET    | Get all articles                |
+| `/articles/:id`         | GET    | Get article by ID               |
+| `/articles/search`      | GET    | Search articles                 |
+| `/categories`           | GET    | Get all categories              |
 
 ## 📱 Responsive Design
 
@@ -160,26 +128,4 @@ The application is fully responsive and works on all devices:
 - Tablet: Adjusted spacing and layout
 - Mobile: Hamburger menu, optimized content layout
 
-## 🤝 Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## 📞 Contact
-
-If you have any questions or suggestions, please reach out to us at:
-- Email: info@newsportal.com
-- Twitter: [@newsportal](https://twitter.com/newsportal)
-
----
-
-Built with ❤️ by Your Name
