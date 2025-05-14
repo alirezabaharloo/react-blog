@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { useAuth } from '../hooks/useAuth';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -9,6 +10,7 @@ const Login = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -23,17 +25,20 @@ const Login = () => {
     setIsLoading(true);
     setError('');
 
-    // Simulate API call
+    if (!formData.username.trim() || !formData.password.trim()) {
+      setError('Username and password are required');
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const result = await login(formData.username, formData.password);
       
-      // Add your actual login logic here
-      console.log('Login attempt with:', formData);
-      
-      // Reset form or redirect after successful login
-      // navigate('/dashboard');
+      if (!result.success) {
+        setError(result.error || 'Failed to login. Please check your credentials.');
+      }
     } catch (err) {
-      setError('Failed to login. Please check your credentials.');
+      setError('An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }

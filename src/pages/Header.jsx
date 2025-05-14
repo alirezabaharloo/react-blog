@@ -2,13 +2,17 @@ import { Link } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { HEADER_DATA } from '../data/PAGE_DATAS.jsx';
 import HeaderSearch from '../components/HeaderSearch';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../hooks/useAuth';
 
 const Header = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const { user, isAuthenticated, logout } = useAuth();
+  const userMenuRef = useRef(null);
 
   // Check if we're on mobile based on screen width
   useEffect(() => {
@@ -32,6 +36,20 @@ const Header = () => {
   useEffect(() => {
     setIsOpen(false);
   }, [location]);
+  
+  // Close user menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // Animation variants for the mobile menu
   const menuVariants = {
@@ -56,6 +74,28 @@ const Header = () => {
   const itemVariants = {
     hidden: { opacity: 0, y: -20 },
     visible: { opacity: 1, y: 0 }
+  };
+  
+  // User menu animation variants
+  const userMenuVariants = {
+    hidden: { opacity: 0, y: -10, scale: 0.95 },
+    visible: { 
+      opacity: 1, 
+      y: 0, 
+      scale: 1,
+      transition: { 
+        type: "spring",
+        duration: 0.3,
+        staggerChildren: 0.05,
+        delayChildren: 0.05
+      }
+    },
+    exit: { 
+      opacity: 0, 
+      y: -10, 
+      scale: 0.95,
+      transition: { duration: 0.2 } 
+    }
   };
 
   // Separate main nav items from auth items
@@ -91,25 +131,82 @@ const Header = () => {
             {/* Search Component */}
             <HeaderSearch />
 
-            {/* Auth Links */}
-            <div className="flex space-x-2 ml-2">
-              {authItems.map((item) => (
-                <Link 
-                  key={item.id}
-                  to={item.path}
-                  className={`
-                    px-4 py-2 rounded-md font-medium transition-all duration-200
-                    ${item.name === 'Login' ? 
-                      'text-blue-600 border border-blue-600 hover:bg-blue-50' : 
-                      'bg-blue-600 text-white hover:bg-blue-700'
-                    }
-                    ${location.pathname === item.path ? 'ring-2 ring-blue-300' : ''}
-                  `}
+            {/* Auth Links or User Menu */}
+            {isAuthenticated ? (
+              <div className="relative ml-2" ref={userMenuRef}>
+                <button 
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center space-x-2 p-2 rounded-full hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-300"
                 >
-                  {item.name}
-                </Link>
-              ))}
-            </div>
+                  <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                    {user?.username?.charAt(0).toUpperCase() || 'U'}
+                  </div>
+                  <span className="text-gray-700">{user?.username || 'User'}</span>
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className={`h-4 w-4 text-gray-500 transition-transform duration-200 ${showUserMenu ? 'transform rotate-180' : ''}`} 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                
+                <AnimatePresence>
+                  {showUserMenu && (
+                    <motion.div
+                      variants={userMenuVariants}
+                      initial="hidden"
+                      animate="visible"
+                      exit="exit"
+                      className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
+                    >
+                      <div className="px-4 py-3 border-b border-gray-100">
+                        <p className="text-sm text-gray-600">Logged in as</p>
+                        <p className="font-medium text-gray-800 truncate">{user?.username || 'User'}</p>
+                      </div>
+                      
+                      <motion.div variants={itemVariants} className="py-1">
+                        <a href="#profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
+                      </motion.div>
+                      
+                      <motion.div variants={itemVariants} className="py-1">
+                        <a href="#settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                      </motion.div>
+                      
+                      <motion.div variants={itemVariants} className="py-1 border-t border-gray-100">
+                        <button 
+                          onClick={logout}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          Sign out
+                        </button>
+                      </motion.div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <div className="flex space-x-2 ml-2">
+                {authItems.map((item) => (
+                  <Link 
+                    key={item.id}
+                    to={item.path}
+                    className={`
+                      px-4 py-2 rounded-md font-medium transition-all duration-200
+                      ${item.name === 'Login' ? 
+                        'text-blue-600 border border-blue-600 hover:bg-blue-50' : 
+                        'bg-blue-600 text-white hover:bg-blue-700'
+                      }
+                      ${location.pathname === item.path ? 'ring-2 ring-blue-300' : ''}
+                    `}
+                  >
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
           
           {/* Mobile Navigation Controls */}
@@ -158,11 +255,11 @@ const Header = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
+            initial={{ height: 0, opacity: 0, boxShadow: 'none' }}
+            animate={{ height: 'auto', opacity: 1, boxShadow: '0 2rem 2rem rgba(0, 0, 0, 0.2)' }}
+            exit={{ height: 0, opacity: 0, boxShadow: 'none' }} 
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className="md:hidden overflow-hidden bg-white border-t border-gray-200"
+            className="md:hidden overflow-hidden bg-white border-t border-gray-200 absolute top-16 left-0 right-0"
           >
             <motion.nav 
               variants={menuVariants}
@@ -172,24 +269,120 @@ const Header = () => {
               className="px-4 py-4"
             >
               <ul className="space-y-4">
-                {HEADER_DATA.map((item) => (
+                {mainNavItems.map((item) => (
                   <motion.li key={item.id} variants={itemVariants}>
                     <Link
                       to={item.path}
                       className={`block py-2 px-3 rounded-md transition-colors ${
-                        item.name === 'Login' || item.name === 'Register' 
-                          ? `font-medium ${item.name === 'Login' ? 'text-blue-600 border border-blue-600' : 'bg-blue-600 text-white'}`
-                          : location.pathname === item.path
-                            ? 'text-blue-600 bg-blue-50'
-                            : 'text-gray-600 hover:bg-gray-100 hover:text-blue-600'
+                        location.pathname === item.path
+                          ? 'text-blue-600 bg-blue-50'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-blue-600'
                       }`}
                     >
                       {item.name}
                     </Link>
                   </motion.li>
                 ))}
+                
+                {isAuthenticated ? (
+                  <>
+                    <motion.li variants={itemVariants}>
+                      <div className="px-3 py-2 border-t border-gray-100 mt-2">
+                        <div className="flex items-center space-x-3 py-2">
+                          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold">
+                            {user?.username?.charAt(0).toUpperCase() || 'U'}
+                          </div>
+                          <span className="font-medium">{user?.username || 'User'}</span>
+                        </div>
+                      </div>
+                    </motion.li>
+                    <motion.li variants={itemVariants}>
+                      <a
+                        href="#profile"
+                        className="block py-2 px-3 rounded-md transition-colors text-gray-600 hover:bg-gray-100 hover:text-blue-600"
+                      >
+                        Your Profile
+                      </a>
+                    </motion.li>
+                    <motion.li variants={itemVariants}>
+                      <a
+                        href="#settings"
+                        className="block py-2 px-3 rounded-md transition-colors text-gray-600 hover:bg-gray-100 hover:text-blue-600"
+                      >
+                        Settings
+                      </a>
+                    </motion.li>
+                    <motion.li variants={itemVariants}>
+                      <button
+                        onClick={logout}
+                        className="w-full text-left block py-2 px-3 rounded-md transition-colors text-red-600 hover:bg-red-50"
+                      >
+                        Sign out
+                      </button>
+                    </motion.li>
+                  </>
+                ) : (
+                  <>
+                    {authItems.map((item) => (
+                      <motion.li key={item.id} variants={itemVariants}>
+                        <Link
+                          to={item.path}
+                          className={`block py-2 px-3 rounded-md transition-colors ${
+                            item.name === 'Login' || item.name === 'Register' 
+                              ? `font-medium ${item.name === 'Login' ?
+                               'text-blue-600 border border-blue-600' :
+                              'bg-blue-600 text-white'}`
+                              : location.pathname === item.path
+                                ? 'text-blue-600 bg-blue-50'
+                                : 'text-gray-600 hover:bg-gray-100 hover:text-blue-600'
+                          } ${location.pathname === '/login' && item.name === 'Login' ||
+                             location.pathname === '/register' && item.name === 'Register' 
+                             ? 'ring-2 ring-blue-300' : ''}`}
+                        >
+                          {item.name}
+                        </Link>
+                      </motion.li>
+                    ))}
+                  </>
+                )}
               </ul>
             </motion.nav>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Mobile User Menu */}
+      <AnimatePresence>
+        {showUserMenu && isMobile && (
+          <motion.div
+            variants={userMenuVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="md:hidden absolute right-4 mt-2 w-64 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200"
+            ref={userMenuRef}
+          >
+            <div className="px-4 py-3 border-b border-gray-100">
+              <p className="text-sm text-gray-600">Logged in as</p>
+              <p className="font-medium text-gray-800 truncate">{user?.username || 'User'}</p>
+            </div>
+            
+            <motion.div variants={itemVariants} className="py-1">
+              <a href="#profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Your Profile</a>
+            </motion.div>
+            
+            <motion.div variants={itemVariants} className="py-1">
+              <a href="#settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</a>
+            </motion.div>
+            
+            <motion.div variants={itemVariants} className="py-1 border-t border-gray-100">
+              <button 
+                onClick={logout}
+                className="w-full text-left px-4 py-2 text-red-600 hover:bg-red-50"
+              >
+                Sign out
+              </button>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>

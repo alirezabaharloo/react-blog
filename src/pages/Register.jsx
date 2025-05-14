@@ -1,16 +1,21 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '../hooks/useAuth';
 
 const Register = () => {
   const [formData, setFormData] = useState({
     username: '',
+    email: '',
     password: '',
-    repeatPassword: ''
+    confirm_password: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [successMessage, setSuccessMessage] = useState('');
   const [step, setStep] = useState(1);
+  const { register } = useAuth();
+  const navigate = useNavigate();
   
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -50,8 +55,8 @@ const Register = () => {
       newErrors.password = 'Password must be at least 6 characters';
     }
     
-    if (formData.password !== formData.repeatPassword) {
-      newErrors.repeatPassword = 'Passwords do not match';
+    if (formData.password !== formData.confirm_password) {
+      newErrors.confirm_password = 'Passwords do not match';
     }
     
     setErrors(newErrors);
@@ -80,15 +85,32 @@ const Register = () => {
     
     setIsLoading(true);
     
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const userData = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        confirm_password: formData.confirm_password
+      };
       
-      // Add your actual registration logic here
-      console.log('Registration with:', formData);
+      const result = await register(userData);
       
-      // Reset form or redirect after successful registration
-      // navigate('/login');
+      if (result.success) {
+        setSuccessMessage('Registration was successful! Please login.');
+        setTimeout(() => {
+          navigate('/login');
+        }, 2000);
+      } else {
+        // Handle backend validation errors
+        if (result.error.includes('username')) {
+          setErrors(prev => ({...prev, username: 'Username already exists'}));
+          setStep(1); // Go back to username step
+        } else if (result.error.includes('password')) {
+          setErrors(prev => ({...prev, password: result.error}));
+        } else {
+          setErrors(prev => ({...prev, form: result.error}));
+        }
+      }
     } catch (err) {
       setErrors({ form: 'Registration failed. Please try again.' });
     } finally {
@@ -138,6 +160,40 @@ const Register = () => {
     tap: { scale: 0.98 },
     disabled: { opacity: 0.7 }
   };
+
+  if (successMessage) {
+    return (
+      <motion.div 
+        className="max-w-md mx-auto p-8 bg-white rounded-lg shadow-lg my-[8rem]"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 24 }}
+      >
+        <div className="text-center mb-6">
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="mx-auto mb-4 bg-green-100 rounded-full p-3 w-16 h-16 flex items-center justify-center"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </motion.div>
+          <h2 className="text-2xl font-bold text-gray-800">Success!</h2>
+          <p className="text-green-600 mt-2">{successMessage}</p>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mt-6"
+          >
+            <p className="text-gray-600">Redirecting to login page...</p>
+          </motion.div>
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div 
@@ -247,25 +303,25 @@ const Register = () => {
               </motion.div>
 
               <motion.div className="mb-6" variants={itemVariants}>
-                <label htmlFor="repeatPassword" className="block text-gray-700 mb-2">Confirm Password</label>
+                <label htmlFor="confirm_password" className="block text-gray-700 mb-2">Confirm Password</label>
                 <motion.input
                   whileFocus={{ scale: 1.01, boxShadow: "0 0 0 3px rgba(59, 130, 246, 0.1)" }}
                   transition={{ duration: 0.2 }}
                   type="password"
-                  id="repeatPassword"
-                  name="repeatPassword"
-                  value={formData.repeatPassword}
+                  id="confirm_password"
+                  name="confirm_password"
+                  value={formData.confirm_password}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 rounded-lg border ${errors.repeatPassword ? 'border-red-500' : 'border-gray-300'} focus:border-blue-500 focus:outline-none transition-all duration-200`}
+                  className={`w-full px-4 py-3 rounded-lg border ${errors.confirm_password ? 'border-red-500' : 'border-gray-300'} focus:border-blue-500 focus:outline-none transition-all duration-200`}
                   placeholder="Confirm your password"
                 />
-                {errors.repeatPassword && (
+                {errors.confirm_password && (
                   <motion.p 
                     className="mt-1 text-red-500 text-sm"
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                   >
-                    {errors.repeatPassword}
+                    {errors.confirm_password}
                   </motion.p>
                 )}
               </motion.div>

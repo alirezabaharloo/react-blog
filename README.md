@@ -1,11 +1,11 @@
 # News Portal
 
 
-A modern, responsive news portal built with React and Node.js, featuring beautiful animations, user authentication, article search, and category browsing.
+A modern, responsive news portal built with React and Django REST Framework, featuring beautiful animations, user authentication, article search, and category browsing.
 
 ## 📋 Overview
 
-News Portal is a full-stack web application that offers users a seamless experience to browse, search, and read news articles. The application features a modern UI with smooth animations powered by Framer Motion, a responsive design that works on all devices, and a robust backend API.
+News Portal is a full-stack web application that offers users a seamless experience to browse, search, and read news articles. The application features a modern UI with smooth animations powered by Framer Motion, a responsive design that works on all devices, and a robust backend API powered by Django REST Framework.
 
 ## ✨ Features
 
@@ -19,15 +19,20 @@ News Portal is a full-stack web application that offers users a seamless experie
 - 📄 Article detail pages
 
 ### Backend
+- 🐍 Django REST Framework backend
 - 📊 Category and article system
+- 🔍 Full-text search capability
+- 🔄 RESTful API architecture
 
 ## 🚀 Getting Started
 
-This project consists of two parts: the frontend (React) and the backend (Node.js). Follow the instructions below to set up both parts.
+This project consists of two parts: the frontend (React) and the backend (Django). Follow the instructions below to set up both parts.
 
 ### Prerequisites
 
 - Node.js (v14.0 or higher)
+- Python (v3.8 or higher)
+- pip (Python package manager)
 
 
 ## 🔧 Installation & Setup
@@ -40,15 +45,30 @@ This project consists of two parts: the frontend (React) and the backend (Node.j
    cd news-portal/backend
    ```
 
-2. Install dependencies
+2. Create and activate a virtual environment
    ```bash
-   npm install
+   python -m venv venv
+   
+   # On Windows
+   venv\Scripts\activate
+   
+   # On macOS/Linux
+   source venv/bin/activate
    ```
 
-
-3. Start the backend server
+3. Install dependencies
    ```bash
-   node index.js
+   pip install -r requirements.txt
+   ```
+
+4. Apply migrations
+   ```bash
+   python manage.py migrate
+   ```
+
+5. Start the backend server
+   ```bash
+   python manage.py runserver
    ```
    The server will start on http://localhost:8000
 
@@ -95,30 +115,35 @@ This project consists of two parts: the frontend (React) and the backend (Node.j
 
 ```
 news-portal/
-├── backend/          # Node.js backend
-│   ├── controllers/  # Route controllers
-│   ├── models/       # Database models
-│   ├── routes/       # API routes
-│   └── server.js     # Entry point
+├── backend/                  # Django backend
+│   ├── newsportal/           # Main Django project
+│   ├── api/                  # Django REST API app
+│   │   ├── serializers.py    # API serializers
+│   │   ├── views.py          # API views
+│   │   ├── urls.py           # API routes
+│   ├── articles/             # Articles app
+│   │   ├── models.py         # Database models
+│   │   ├── admin.py          # Admin configuration
+│   ├── manage.py             # Django management script
 │
-└── frontend/         # React frontend
-    ├── public/       # Static files
-    └── src/          # Source files
-        ├── components/   # UI components
-        ├── context/      # React context
-        ├── data/         # Static data
-        ├── pages/        # Page components
-        └── App.jsx       # Main component
+└── frontend/                 # React frontend
+    ├── public/               # Static files
+    └── src/                  # Source files
+        ├── components/       # UI components
+        ├── context/          # React context
+        ├── data/             # Static data
+        ├── pages/            # Page components
+        └── App.jsx           # Main component
 ```
 
 ### API Endpoints
 
-| Endpoint                    | Method | Description                     |
-|-----------------------------|--------|---------------------------------|
-| `/articles`             | GET    | Get all articles                |
-| `/articles/:id`         | GET    | Get article by ID               |
-| `/articles/search`      | GET    | Search articles                 |
-| `/categories`           | GET    | Get all categories              |
+| Endpoint                 | Method | Description                     |
+|--------------------------|--------|---------------------------------|
+| `/api/articles/`         | GET    | Get all articles                |
+| `/api/articles/<id>/`    | GET    | Get article by ID               |
+| `/api/articles/search/`  | GET    | Search articles                 |
+| `/api/categories/`       | GET    | Get all categories              |
 
 ## 📱 Responsive Design
 

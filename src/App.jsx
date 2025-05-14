@@ -16,6 +16,7 @@ import Contact from './pages/Contact';
 import Error from './pages/Error';
 import { ArticleProvider } from './context/ArticleContext';
 import { SearchProvider } from './context/SearchContext';
+import { AuthProvider } from './context/AuthContext';
 import PageTransition from './components/PageTransition';
 import Register from './pages/Register';
 import Login from './pages/Login';
@@ -74,19 +75,21 @@ const AnimatedRoutes = () => {
 
 function App() {
   return (
-    <ArticleProvider>
-      <SearchProvider>
-        <Router>
-          <div className="min-h-screen flex flex-col">
-            <Header />
-            <main className="flex-grow">
-              <AnimatedRoutes />
-            </main>
-            <Footer />
-          </div>
-        </Router>
-      </SearchProvider>
-    </ArticleProvider>
+    <Router>
+      <ArticleProvider>
+        <SearchProvider>
+          <AuthProvider>
+            <div className="min-h-screen flex flex-col">
+              <Header />
+              <main className="flex-grow">
+                <AnimatedRoutes />
+              </main>
+              <Footer />
+            </div>
+          </AuthProvider>
+        </SearchProvider>
+      </ArticleProvider>
+    </Router>
   );
 }
 
