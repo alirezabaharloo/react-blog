@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
+import httpClient from '../services/httpClient';
+import SpinLoader from '../components/loaders/SpinLoader';
 
 const ChangePassword = () => {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, isLoading, getAuthHeader } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     current_password: '',
@@ -16,10 +18,11 @@ const ChangePassword = () => {
   const [errors, setErrors] = useState({});
 
   // Redirect to login if not authenticated
-  if (!isLoading && !isAuthenticated) {
-    navigate('/login');
-    return null;
-  }
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      navigate('/login');
+    }
+  }, [isLoading, isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -114,9 +117,7 @@ const ChangePassword = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[70vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent"></div>
-      </div>
+      <SpinLoader />
     );
   }
 

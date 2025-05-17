@@ -11,7 +11,7 @@ const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, isAdmin } = useAuth();
   const userMenuRef = useRef(null);
 
   // Check if we're on mobile based on screen width
@@ -289,22 +289,59 @@ const Header = () => {
                       </div>
                     </motion.li>
                     <motion.li variants={itemVariants}>
-                      <a
-                        href="#profile"
+                      <Link 
+                        to="/profile" 
                         className="block py-2 px-3 rounded-md transition-colors text-gray-600 hover:bg-gray-100 hover:text-blue-600"
                       >
                         Your Profile
-                      </a>
+                      </Link>
                     </motion.li>
+                    
+                    {/* Admin Links for Mobile */}
+                    {isAdmin && (
+                      <>
+                        <motion.li variants={itemVariants}>
+                          <div className="px-3 py-2 border-t border-gray-100">
+                            <p className="text-xs text-gray-500 uppercase tracking-wider">Admin</p>
+                          </div>
+                        </motion.li>
+                        <motion.li variants={itemVariants}>
+                          <Link 
+                            to="/admin" 
+                            className="block py-2 px-3 rounded-md transition-colors text-purple-600 hover:bg-purple-50"
+                          >
+                            Admin Dashboard
+                          </Link>
+                        </motion.li>
+                        <motion.li variants={itemVariants}>
+                          <Link 
+                            to="/admin/users" 
+                            className="block py-2 px-3 rounded-md transition-colors text-purple-600 hover:bg-purple-50"
+                          >
+                            Manage Users
+                          </Link>
+                        </motion.li>
+                        <motion.li variants={itemVariants}>
+                          <Link 
+                            to="/admin/articles" 
+                            className="block py-2 px-3 rounded-md transition-colors text-purple-600 hover:bg-purple-50"
+                          >
+                            Manage Articles
+                          </Link>
+                        </motion.li>
+                        <motion.li variants={itemVariants}>
+                          <Link 
+                            to="/admin/categories" 
+                            className="block py-2 px-3 rounded-md transition-colors text-purple-600 hover:bg-purple-50"
+                          >
+                            Manage Categories
+                          </Link>
+                        </motion.li>
+                      </>
+                    )}
+                    
                     <motion.li variants={itemVariants}>
-                      <a
-                        href="#settings"
-                        className="block py-2 px-3 rounded-md transition-colors text-gray-600 hover:bg-gray-100 hover:text-blue-600"
-                      >
-                        Settings
-                      </a>
-                    </motion.li>
-                    <motion.li variants={itemVariants}>
+                      <div className="border-t border-gray-100 mt-2"></div>
                       <button
                         onClick={logout}
                         className="w-full text-left block py-2 px-3 rounded-md transition-colors text-red-600 hover:bg-red-50"
@@ -355,12 +392,27 @@ const Header = () => {
             ref={userMenuRef}
           >
             <motion.div variants={itemVariants} className="py-1">
-              <a href="#profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Your Profile</a>
+              <Link 
+                to="/profile" 
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={() => setShowUserMenu(false)}
+              >
+                Your Profile
+              </Link>
             </motion.div>
             
-            <motion.div variants={itemVariants} className="py-1">
-              <a href="#settings" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Settings</a>
-            </motion.div>
+            {/* Admin Links for Mobile User Menu */}
+            {isAdmin && (
+              <motion.div variants={itemVariants} className="py-1 border-t border-gray-100">
+                <Link 
+                  to="/admin" 
+                  className="block px-4 py-2 text-sm text-purple-600 hover:bg-purple-50"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  Admin Dashboard
+                </Link>
+              </motion.div>
+            )}
             
             <motion.div variants={itemVariants} className="py-1 border-t border-gray-100">
               <button 
