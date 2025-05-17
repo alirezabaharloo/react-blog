@@ -1,6 +1,7 @@
 import datetime
 from django.core.management.base import BaseCommand
 from blog.models import Category, Article
+from django.contrib.auth.models import User
 
 class Command(BaseCommand):
     help = 'Seeds the database with initial categories and articles'
@@ -188,7 +189,7 @@ class Command(BaseCommand):
             article = Article.objects.create(
                 title=article_data['title'],
                 excerpt=article_data['excerpt'],
-                author=article_data['author'],
+                author=User.objects.get(username='admin'),
                 date=date_obj,
                 read_time=article_data['readTime'],
                 category=categories[article_data['categoryId']],

@@ -58,7 +58,6 @@ const useHttp = (url, options = null) => {
 
   useEffect(()=>{
 
-        
     if ((options && options.method === 'GET') || (!options)) {
       sendRequest();
     } 
@@ -67,9 +66,9 @@ const useHttp = (url, options = null) => {
 
   return {
     isLoading,
-    isError: error.isError,
     data,
     sendRequest,
+    isError: error.isError,
     errorMessage: error.errorMessage
   };
 };

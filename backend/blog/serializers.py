@@ -10,15 +10,26 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class ArticleSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
-    
+    author = serializers.SerializerMethodField()
+
     class Meta:
         model = Article
-        fields = '__all__'
+        fields = ['id', 'title', 'excerpt', 'author', 'date', 'read_time', 'image', 'category']
 
+    def get_author(self, obj):
+        if obj.author.first_name and obj.author.last_name:
+            return f"{obj.author.first_name} {obj.author.last_name}"
+        return obj.author.username
 
 class ArticleListSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
+    author = serializers.SerializerMethodField()
     
     class Meta:
         model = Article
-        exclude = ['content']  # Exclude content for list views to reduce payload size 
+        fields = ['id', 'title', 'excerpt', 'author', 'date', 'read_time', 'image', 'category']
+
+    def get_author(self, obj):
+        if obj.author.first_name and obj.author.last_name:
+            return f"{obj.author.first_name} {obj.author.last_name}"
+        return obj.author.username

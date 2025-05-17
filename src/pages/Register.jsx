@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
+import { useEffect } from 'react';
+
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -14,9 +16,15 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
   const [step, setStep] = useState(1);
-  const { register } = useAuth();
+  const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -102,21 +110,22 @@ const Register = () => {
         }, 2000);
       } else {
         // Handle backend validation errors
-        if (result.error.includes('username')) {
-          setErrors(prev => ({...prev, username: 'Username already exists'}));
+        if (result.error.hasOwnProperty("username")) {
+          setErrors(prev => ({...prev, username: result.error.username[0]}));
           setStep(1); // Go back to username step
-        } else if (result.error.includes('password')) {
-          setErrors(prev => ({...prev, password: result.error}));
-        } else {
+        } else if (result.error.hasOwnProperty("password")) {
+          setErrors(prev => ({...prev, password: result.error.password[0]}));
+        } else {    
           setErrors(prev => ({...prev, form: result.error}));
         }
       }
     } catch (err) {
-      setErrors({ form: 'Registration failed. Please try again.' });
+      setErrors({ form:'Registration failed. Please try again.' });
     } finally {
       setIsLoading(false);
     }
   };
+  
 
   // Animation variants
   const containerVariants = {

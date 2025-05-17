@@ -50,12 +50,7 @@ export default function ArticleDetail() {
             <h1 className="text-4xl md:text-5xl font-bold mb-4">{article.title}</h1>
             <div className="flex items-center justify-center space-x-4">
               <div className="flex items-center">
-                <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                  <span className="text-gray-600 font-medium">
-                    {article.author.split(' ').map(n => n[0]).join('')}
-                  </span>
-                </div>
-                <span className="ml-2 text-white">{article.author}</span>
+                <span className="ml-2 text-white bg-gray-500 px-4 py-2 rounded-full text-sm font-medium">{article.author}</span>
               </div>
               <span className="text-gray-300">•</span>
               <span className="text-gray-300">{article.date}</span>

@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
+import { useEffect } from 'react';
 
 const Login = () => {
   const [formData, setFormData] = useState({
@@ -10,7 +11,14 @@ const Login = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -35,7 +43,7 @@ const Login = () => {
       const result = await login(formData.username, formData.password);
       
       if (!result.success) {
-        setError(result.error || 'Failed to login. Please check your credentials.');
+        setError(result.error ? result.error[0] : 'Failed to login. Please check your credentials.');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');

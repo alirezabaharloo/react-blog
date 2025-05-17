@@ -1,5 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import authHttpRequest from '../utils/authHttpRequest';
 
 export const AuthContext = createContext();
 
@@ -20,11 +21,9 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(storedUser));
       setIsAuthenticated(true);
     }
-    
     setIsLoading(false);
   }, []);
 
-  // Login user
   const login = async (username, password) => {
     try {
       const response = await fetch('http://localhost:8000/api/auth/get-access-token/', {
@@ -32,30 +31,29 @@ export const AuthProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({username, password})
       });
-      
+  
+      const data = await response.json();
+  
       if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessage = errorData.detail || 'Invalid credentials. Please try again.';
-        throw new Error(errorMessage);
+        return { success: false, error: data.error }
       }
       
-      const data = await response.json();
-      
       // Save tokens to localStorage
-      localStorage.setItem('tokens', JSON.stringify(data));
-      setTokens(data);
+      localStorage.setItem('tokens', JSON.stringify({access: data.access, refresh: data.refresh}));
+      setTokens({access: data.access, refresh: data.refresh});
       
-      // Get user info
-      await fetchUserProfile(data.access);
+      // Set user username in the localStorage
+      localStorage.setItem('user', JSON.stringify({username: data.username}));
+      setUser({username: data.username});
       
       setIsAuthenticated(true);
       navigate('/');
       
       return { success: true };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: 'An error occurred. Please try again.' };
     }
   };
 
@@ -67,33 +65,20 @@ export const AuthProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(userData),
+        body: JSON.stringify(userData)
       });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        const errorMessages = [];
-        
-        // Handle different error formats
-        if (typeof errorData === 'object') {
-          Object.entries(errorData).forEach(([key, value]) => {
-            if (Array.isArray(value)) {
-              errorMessages.push(`${key}: ${value.join(', ')}`);
-            } else {
-              errorMessages.push(`${key}: ${value}`);
-            }
-          });
-        } else {
-          errorMessages.push(errorData.toString());
-        }
-        
-        throw new Error(errorMessages.join('\n'));
-      }
-      
+  
       const data = await response.json();
-      return { success: true, data };
+  
+      if (!response.ok) {
+        return { success: false, error: data }
+      }
+            
+      navigate('/');
+      
+      return { success: true };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { success: false, error: 'An error occurred. Please try again.' };
     }
   };
 
@@ -107,67 +92,28 @@ export const AuthProvider = ({ children }) => {
     navigate('/login');
   };
 
-  // Fetch user profile
-  const fetchUserProfile = async (accessToken) => {
-    try {
-      const response = await fetch('http://localhost:8000/api/auth/profile/', {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch user profile');
-      }
-      
-      const userData = await response.json();
-      setUser(userData);
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      return userData;
-    } catch (error) {
-      console.error('Error fetching user profile:', error);
-      return null;
-    }
-  };
 
-  // Refresh token
   const refreshToken = async () => {
-    if (!tokens || !tokens.refresh) {
-      logout();
-      return null;
-    }
-
-    try {
-      const response = await fetch('http://localhost:8000/api/auth/get-refresh-token/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh: tokens.refresh }),
-      });
-      
-      if (!response.ok) {
-        throw new Error('Unable to refresh token');
-      }
-      
-      const data = await response.json();
-      const updatedTokens = { ...tokens, access: data.access };
-      
-      localStorage.setItem('tokens', JSON.stringify(updatedTokens));
-      setTokens(updatedTokens);
-      
-      return data.access;
-    } catch (error) {
-      logout();
-      return null;
-    }
-  };
+    const res = await fetch('http://localhost:8000/api/auth/get-refresh-token/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${tokens.access}`
+      },
+    });
+    
+    const data = await res.json();
+    return data;
+  }
 
   // Get auth header
   const getAuthHeader = () => {
     return tokens ? { 'Authorization': `Bearer ${tokens.access}` } : {};
   };
+
+  const updateUserProfile = async (userProfileData) => {
+    
+  }
 
   return (
     <AuthContext.Provider value={{

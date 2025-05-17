@@ -32,20 +32,6 @@ export default function ArticleCart({ article, ...props }){
         <p className="text-gray-600 mb-4">
           {article.excerpt}
         </p>
-        <div className="flex items-center">
-          <div className="flex-shrink-0">
-            <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-              <span className="text-gray-600 font-medium">
-                {article.author.split(' ').map(n => n[0]).join('')}
-              </span>
-            </div>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-gray-900">
-              {article.author}
-            </p>
-          </div>
-        </div>
       </div>
     </motion.div>
     )

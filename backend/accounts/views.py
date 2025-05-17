@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserSerializer, RegisterSerializer, UserProfileSerializer
-from .models import UserProfile
 from django.contrib.auth.models import User
 
 # Create your views here.
@@ -24,9 +23,20 @@ class RegisterView(generics.CreateAPIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class UserProfileView(generics.RetrieveAPIView):
+class UserProfileView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = UserProfileSerializer
     
     def get_object(self):
-        return UserProfile.objects.get(user=self.request.user)
+        return User.objects.get(id=self.request.user.id)
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200:
+            # Get the user based on the username field used for authentication
+            username = request.data.get('username')
+            user = User.objects.get(username=username)
+            # Add username to the response
+            response.data['username'] = user.username
+        return response

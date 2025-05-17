@@ -43,8 +43,6 @@ export default function ArticlesWithPagination() {
     }, 800);
   };
 
-
-
   if (isLoading) {
     return <SpinLoader />;
   }

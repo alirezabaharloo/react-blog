@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
-import { useAuth } from './useAuth';
+import { useAuth } from '../hooks/useAuth';
 
-const useAuthHttp = (url, options = null) => {
+const authHttpRequest = (url, options = null) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState({
     isError: false,
@@ -32,17 +32,14 @@ const useAuthHttp = (url, options = null) => {
             'Authorization': `Bearer ${newAccessToken}`
           };
           const retryRes = await fetch(url, options);
-          
+          localStorage.setItem('tokens', JSON.stringify(tokens));
           if (!retryRes.ok) {
             const errorData = await retryRes.json();
-            throw new Error(errorData.detail || 'Failed to fetch data');
+            logout();
+            throw new Error(errorData.detail || 'Your session has expired. Please login again.');
           }
           
           return await retryRes.json();
-        } else {
-          // If refresh token is invalid, logout user
-          logout();
-          throw new Error('Your session has expired. Please login again.');
         }
       }
       
@@ -94,11 +91,11 @@ const useAuthHttp = (url, options = null) => {
 
   return {
     isLoading,
-    isError: error.isError,
     data,
     sendRequest,
+    isError: error.isError,
     errorMessage: error.errorMessage
   };
 };
 
-export default useAuthHttp; 
+export default authHttpRequest; 

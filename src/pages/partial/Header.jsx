@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
-import { HEADER_DATA } from '../data/PAGE_DATAS.jsx';
-import HeaderSearch from '../components/HeaderSearch';
+import { HEADER_DATA } from '../../data/PAGE_DATAS.jsx';
+import HeaderSearch from '../../components/HeaderSearch.jsx';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../../hooks/useAuth.jsx';
 
 const Header = () => {
   const location = useLocation();
@@ -162,17 +162,9 @@ const Header = () => {
                       exit="exit"
                       className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200"
                     >
-                      <div className="px-4 py-3 border-b border-gray-100">
-                        <p className="text-sm text-gray-600">Logged in as</p>
-                        <p className="font-medium text-gray-800 truncate">{user?.username || 'User'}</p>
-                      </div>
                       
                       <motion.div variants={itemVariants} className="py-1">
-                        <a href="#profile" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
-                      </motion.div>
-                      
-                      <motion.div variants={itemVariants} className="py-1">
-                        <a href="#settings" className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                        <Link to="/profile" onClick={() => setShowUserMenu(false)}   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</Link>
                       </motion.div>
                       
                       <motion.div variants={itemVariants} className="py-1 border-t border-gray-100">
@@ -362,11 +354,6 @@ const Header = () => {
             className="md:hidden absolute right-4 mt-2 w-64 bg-white rounded-lg shadow-lg py-2 z-50 border border-gray-200"
             ref={userMenuRef}
           >
-            <div className="px-4 py-3 border-b border-gray-100">
-              <p className="text-sm text-gray-600">Logged in as</p>
-              <p className="font-medium text-gray-800 truncate">{user?.username || 'User'}</p>
-            </div>
-            
             <motion.div variants={itemVariants} className="py-1">
               <a href="#profile" className="block px-4 py-2 text-gray-700 hover:bg-gray-100">Your Profile</a>
             </motion.div>
