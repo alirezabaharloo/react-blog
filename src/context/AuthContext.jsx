@@ -1,6 +1,6 @@
 import { createContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import authHttpRequest from '../utils/authHttpRequest';
+
 
 export const AuthContext = createContext();
 
@@ -106,14 +106,13 @@ export const AuthProvider = ({ children }) => {
     return data;
   }
 
-  // Get auth header
-  const getAuthHeader = () => {
-    return tokens ? { 'Authorization': `Bearer ${tokens.access}` } : {};
-  };
 
-  const updateUserProfile = async (userProfileData) => {
-    
+  const getAuthHeader = () => {
+    return {
+      'Authorization': `Bearer ${tokens.access}`
+    };
   }
+
 
   return (
     <AuthContext.Provider value={{

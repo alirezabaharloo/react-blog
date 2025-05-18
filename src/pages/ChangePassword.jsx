@@ -2,11 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
-import httpClient from '../services/httpClient';
+import useAuthHttp from '../hooks/useAuthHttp';
 import SpinLoader from '../components/loaders/SpinLoader';
+import SomethingWentWrong from '../components/errors/SomethingWentWrong';
+import { showSuccessToast, showErrorToast } from '../utils/toastNotifs';
 
 const ChangePassword = () => {
-  const { user, isAuthenticated, isLoading, getAuthHeader } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     current_password: '',
@@ -14,15 +16,31 @@ const ChangePassword = () => {
     confirm_password: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
   const [errors, setErrors] = useState({});
+  const [showPasswords, setShowPasswords] = useState({
+    current_password: false,
+    new_password: false,
+    confirm_password: false
+  });
+
+  // Use useAuthHttp for changing password
+  const {
+    sendRequest: changePassword,
+    isLoading: isChangingPassword,
+    isError: isChangePasswordError
+  } = useAuthHttp('http://localhost:8000/api/auth/change-password/', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
 
   // Redirect to login if not authenticated
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isAuthenticated) {
       navigate('/login');
     }
-  }, [isLoading, isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -38,6 +56,13 @@ const ChangePassword = () => {
         [name]: ''
       }));
     }
+  };
+
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
   };
 
   const validateForm = () => {
@@ -67,27 +92,36 @@ const ChangePassword = () => {
     if (!validateForm()) return;
     
     setIsSubmitting(true);
-    setMessage({ type: '', text: '' });
 
     try {
-      // Password change logic will be implemented here
-      // For now, just show a success message
-      setMessage({ 
-        type: 'success', 
-        text: 'Password changed successfully!' 
+      const response = await changePassword({
+        current_password: formData.current_password,
+        new_password: formData.new_password
       });
       
-      // Clear form after successful password change
-      setFormData({
-        current_password: '',
-        new_password: '',
-        confirm_password: ''
-      });
+      if (response?.isError) {
+        if (response.errorMessage.hasOwnProperty('current_password')) {
+          setErrors({ current_password: response.errorMessage.current_password[0] });
+        } else if (response.errorMessage.hasOwnProperty('new_password')) {
+          setErrors({ new_password: response.errorMessage.new_password[0] });
+        } else {
+          setErrors({
+            'form': response.errorMessage.detail[0] || "An error occurred. Please try again."
+          });
+        }
+        showErrorToast('Failed to change password. Please check your input.');
+      } else {
+        showSuccessToast('Password changed successfully!');
+        // Clear form after successful password change
+        setFormData({
+          current_password: '',
+          new_password: '',
+          confirm_password: ''
+        });
+      }
     } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: 'An error occurred. Please try again.' 
-      });
+      showErrorToast('An unexpected error occurred. Please try again.');
+      console.error(error);
     } finally {
       setIsSubmitting(false);
     }
@@ -115,10 +149,8 @@ const ChangePassword = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <SpinLoader />
-    );
+  if (isChangePasswordError) {
+    return <SomethingWentWrong />;
   }
 
   return (
@@ -136,18 +168,9 @@ const ChangePassword = () => {
         <p className="text-gray-600 mt-2">Update your account password</p>
       </motion.div>
 
-      {message.text && (
-        <motion.div 
-          className={`p-4 rounded-md mb-6 ${
-            message.type === 'success' 
-              ? 'bg-green-50 text-green-700 border border-green-200' 
-              : 'bg-red-50 text-red-700 border border-red-200'
-          }`}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          {message.text}
+      {errors.form && (
+        <motion.div variants={itemVariants}>
+          <p className="mt-1 text-sm text-red-600">{errors.form}</p>
         </motion.div>
       )}
 
@@ -158,15 +181,34 @@ const ChangePassword = () => {
             <label htmlFor="current_password" className="block text-sm font-medium text-gray-700 mb-1">
               Current Password
             </label>
-            <input
-              type="password"
-              id="current_password"
-              name="current_password"
-              value={formData.current_password}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 rounded-lg border ${errors.current_password ? 'border-red-500' : 'border-gray-300'} focus:border-blue-500 focus:outline-none transition-all duration-200`}
-              placeholder="Enter your current password"
-            />
+            <div className="relative">
+              <input
+                type={showPasswords.current_password ? "text" : "password"}
+                id="current_password"
+                name="current_password"
+                value={formData.current_password}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-lg border ${errors.current_password ? 'border-red-500' : 'border-gray-300'} focus:border-blue-500 focus:outline-none transition-all duration-200`}
+                placeholder="Enter your current password"
+              />
+              <button
+                type="button"
+                onClick={() => togglePasswordVisibility('current_password')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPasswords.current_password ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                  </svg>
+                )}
+              </button>
+            </div>
             {errors.current_password && (
               <p className="mt-1 text-sm text-red-600">{errors.current_password}</p>
             )}
@@ -177,15 +219,34 @@ const ChangePassword = () => {
             <label htmlFor="new_password" className="block text-sm font-medium text-gray-700 mb-1">
               New Password
             </label>
-            <input
-              type="password"
-              id="new_password"
-              name="new_password"
-              value={formData.new_password}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 rounded-lg border ${errors.new_password ? 'border-red-500' : 'border-gray-300'} focus:border-blue-500 focus:outline-none transition-all duration-200`}
-              placeholder="Enter your new password"
-            />
+            <div className="relative">
+              <input
+                type={showPasswords.new_password ? "text" : "password"}
+                id="new_password"
+                name="new_password"
+                value={formData.new_password}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-lg border ${errors.new_password ? 'border-red-500' : 'border-gray-300'} focus:border-blue-500 focus:outline-none transition-all duration-200`}
+                placeholder="Enter your new password"
+              />
+              <button
+                type="button"
+                onClick={() => togglePasswordVisibility('new_password')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPasswords.new_password ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                  </svg>
+                )}
+              </button>
+            </div>
             {errors.new_password && (
               <p className="mt-1 text-sm text-red-600">{errors.new_password}</p>
             )}
@@ -196,15 +257,34 @@ const ChangePassword = () => {
             <label htmlFor="confirm_password" className="block text-sm font-medium text-gray-700 mb-1">
               Confirm New Password
             </label>
-            <input
-              type="password"
-              id="confirm_password"
-              name="confirm_password"
-              value={formData.confirm_password}
-              onChange={handleChange}
-              className={`w-full px-4 py-3 rounded-lg border ${errors.confirm_password ? 'border-red-500' : 'border-gray-300'} focus:border-blue-500 focus:outline-none transition-all duration-200`}
-              placeholder="Confirm your new password"
-            />
+            <div className="relative">
+              <input
+                type={showPasswords.confirm_password ? "text" : "password"}
+                id="confirm_password"
+                name="confirm_password"
+                value={formData.confirm_password}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-lg border ${errors.confirm_password ? 'border-red-500' : 'border-gray-300'} focus:border-blue-500 focus:outline-none transition-all duration-200`}
+                placeholder="Confirm your new password"
+              />
+              <button
+                type="button"
+                onClick={() => togglePasswordVisibility('confirm_password')}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+              >
+                {showPasswords.confirm_password ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                    <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                    <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+                  </svg>
+                )}
+              </button>
+            </div>
             {errors.confirm_password && (
               <p className="mt-1 text-sm text-red-600">{errors.confirm_password}</p>
             )}

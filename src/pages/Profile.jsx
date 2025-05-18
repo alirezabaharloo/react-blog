@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '../hooks/useAuth';
+import useAuthHttp from '../hooks/useAuthHttp';
 import SpinLoader from '../components/loaders/SpinLoader.jsx';
+import SomethingWentWrong from '../components/errors/SomethingWentWrong.jsx';
+import { showSuccessToast } from '../utils/toastNotifs';
 
 const Profile = () => {
-  const { user } = useAuth();
   const [formData, setFormData] = useState({
     username: '',
     first_name: '',
@@ -13,84 +14,66 @@ const Profile = () => {
     email: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState({ type: '', text: '' });
   const [errors, setErrors] = useState({});
+  
+  const { 
+    isLoading: isLoadingProfile,
+    isError: isLoadingProfileError,
+    data: profileData,
+    sendRequest: fetchProfile
+  } = useAuthHttp('http://localhost:8000/api/auth/profile/');
+
+  const {
+    sendRequest: updateProfile
+  } = useAuthHttp('http://localhost:8000/api/auth/profile/', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' }
+  });
 
   useEffect(() => {
-    const profileData = async () => {
-      // const profileData = await fetchUserProfile();
-      
+    if (profileData) {
       setFormData({
         username: profileData.username || '',
         first_name: profileData.first_name || '',
         last_name: profileData.last_name || '',
         email: profileData.email || ''
       });
-    };
-    profileData();
-  }, []);
+    }
+  }, [profileData]);
   
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    // Clear error when user types
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    
-    // Only validate email format if an email is provided
-    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!validateForm()) return;
-    
     setIsSubmitting(true);
-    setMessage({ type: '', text: '' });
 
     try {
-      // Only include fields that have values
-      const updateData = {};
-      if (formData.first_name.trim()) updateData.first_name = formData.first_name;
-      if (formData.last_name.trim()) updateData.last_name = formData.last_name;
-      if (formData.email.trim()) updateData.email = formData.email;
+      const updateData = {
+        username: profileData.username,
+        ...(formData.first_name.trim() && { first_name: formData.first_name }),
+        ...(formData.last_name.trim() && { last_name: formData.last_name }),
+        ...(formData.email.trim() && { email: formData.email })
+      };
 
-      // const result = await updateProfile(updateData);
-
-      if (result.success) {
-        setMessage({ 
-          type: 'success', 
-          text: 'Profile updated successfully!' 
-        });
+      const response = await updateProfile(updateData);
+      
+      if (response?.isError) {
+        if (response.errorMessage.hasOwnProperty('email')) {
+          setErrors({ email: response.errorMessage.email[0] });
+        } else {
+          setErrors({
+            'form': response.errorMessage.detail[0] || "An error occurred. Please try again."
+          });
+        }
       } else {
-        setMessage({ 
-          type: 'error', 
-          text: result.error || 'Failed to update profile' 
-        });
+        showSuccessToast('Profile updated successfully!');
       }
     } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: 'An error occurred. Please try again.' 
-      });
+      console.log(error.message)
     } finally {
       setIsSubmitting(false);
     }
@@ -118,15 +101,17 @@ const Profile = () => {
     }
   };
 
-  if (!user) {
-    return (
-      <SpinLoader />
-    );
+  if (isLoadingProfile) {
+    return <SpinLoader />;
+  }
+
+  if (isLoadingProfileError) {
+    return <SomethingWentWrong />;
   }
 
   return (
     <motion.div 
-      className="max-w-2xl mx-auto p-8 bg-white rounded-lg shadow-lg my-[4rem]"
+      className="max-w-xl mx-auto p-6 bg-white rounded-lg shadow-lg my-[3rem]"
       initial="hidden"
       animate="visible"
       variants={containerVariants}
@@ -138,21 +123,13 @@ const Profile = () => {
         <h2 className="text-3xl font-bold text-gray-800">Profile Settings</h2>
         <p className="text-gray-600 mt-2">Manage your account information</p>
       </motion.div>
-
-      {message.text && (
-        <motion.div 
-          className={`p-4 rounded-md mb-6 ${
-            message.type === 'success' 
-              ? 'bg-green-50 text-green-700 border border-green-200' 
-              : 'bg-red-50 text-red-700 border border-red-200'
-          }`}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          {message.text}
-        </motion.div>
-      )}
+      {
+        errors.form && (
+          <motion.div variants={itemVariants}>
+            <p className="mt-1 text-sm text-red-600">{errors.form}</p>
+          </motion.div>
+        )
+      }
 
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
@@ -224,13 +201,24 @@ const Profile = () => {
           </motion.div>
 
           {/* Password Change Link */}
-          <motion.div variants={itemVariants} className="pt-4">
-            <Link 
-              to="/change-password" 
-              className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-            >
-              Change Password
-            </Link>
+          <motion.div variants={itemVariants} className="pt-2">
+            <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+              <div className="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                </svg>
+                <span className="text-sm text-gray-600">Want to change your password?</span>
+              </div>
+              <Link 
+                to="/change_password" 
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-200"
+              >
+                Change Password
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                </svg>
+              </Link>
+            </div>
           </motion.div>
 
           {/* Submit Button */}
