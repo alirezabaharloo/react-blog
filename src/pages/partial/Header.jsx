@@ -13,6 +13,7 @@ const Header = () => {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
   const userMenuRef = useRef(null);
+  
 
   // Check if we're on mobile based on screen width
   useEffect(() => {

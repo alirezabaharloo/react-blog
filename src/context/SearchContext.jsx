@@ -10,9 +10,10 @@ export const SearchContext = createContext({
 
 export const SearchProvider = ({ children }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState(null);
+  const [isSearching, setIsSearching] = useState(null);
 
+  
   const performSearch = async (term) => {
     if (!term) return;
 
@@ -20,7 +21,7 @@ export const SearchProvider = ({ children }) => {
     setIsSearching(true);
 
     try {
-      const response = await fetch(`http://localhost:8000/articles/search?q=${encodeURIComponent(term)}`);
+      const response = await fetch(`http://localhost:8000/api/blog/articles/search?q=${encodeURIComponent(term)}`);
       if (!response.ok) {
         throw new Error('Search failed');
       }

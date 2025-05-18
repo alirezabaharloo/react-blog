@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 
-export default function ArticleNotFound() {
+export default function ArticleNotFound({ notFoundedArticleTitle }) {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white flex items-center justify-center px-4">
       <motion.div 
@@ -34,7 +34,17 @@ export default function ArticleNotFound() {
           transition={{ delay: 0.6 }}
           className="text-gray-600 mb-8"
         >
-          We couldn't find the article you're looking for. It might have been removed or doesn't exist.
+          {notFoundedArticleTitle ? (
+            <>
+              We couldn't find the article{" "}
+              <span className="font-semibold text-blue-600 italic">
+                "{notFoundedArticleTitle}"
+              </span>{" "}
+              you're looking for. It might have been removed or doesn't exist.
+            </>
+          ) : (
+            "We couldn't find the article you're looking for. It might have been removed or doesn't exist."
+          )}
         </motion.p>
         
         <div className="flex flex-col sm:flex-row justify-center gap-4">
