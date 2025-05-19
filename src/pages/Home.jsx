@@ -8,33 +8,12 @@ import ArticleCart from '../components/ArticleCart';
 
 const Home = () => {
   const { setArticleData } = useContext(ArticleContext);
-  const { data: featuredArticles } = useHttp('http://localhost:8000/articles');
+  const { data: featuredArticles } = useHttp('http://localhost:8000/api/blog/articles');
 
 
   useEffect(() => {
     setArticleData(featuredArticles);
   }, [featuredArticles]);
-
-  const containerVariants = {
-    hidden: { opacity: 0, },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 50, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: {
-        duration: 0.5
-      }
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">

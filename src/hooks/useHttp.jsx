@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
 
-
 const customFetchFunction = async (url, options = {
   method: 'GET',
   headers: {
@@ -9,15 +8,27 @@ const customFetchFunction = async (url, options = {
   },
 }) => {
   const res = await fetch(url, options);
-  
   const resData = await res.json();
-  
+
   if (!res.ok) {
     // Handle error messages from the server
-    const errorMessage = typeof resData === 'object' 
-      ? Object.entries(resData).map(([key, value]) => `${key}: ${value}`).join('\n')
-      : resData.toString();
-    throw new Error(errorMessage);
+    let errorMessage;
+    if (typeof resData === 'object') {
+      // If the error is an object, create key-value pairs
+      errorMessage = Object.entries(resData).reduce((acc, [key, value]) => {
+        // If value is an array, take the first element
+        const errorValue = Array.isArray(value) ? value[0] : value;
+        acc[key] = errorValue;
+        return acc;
+      }, {});
+    } else {
+      // If it's a simple string/number, keep it as is
+      errorMessage = resData;
+    }
+    setError({
+      isError: true,
+      errorMessage: errorMessage
+    })
   }
 
   return resData;
@@ -27,10 +38,9 @@ const useHttp = (url, options = null) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState({
     isError: false,
-    errorMessage: ""
+    errorMessage: null
   });
   const [data, setData] = useState([]);
-  
 
   const sendRequest = useCallback(async (requestData = null) => {
     setIsLoading(true);
@@ -39,29 +49,22 @@ const useHttp = (url, options = null) => {
       let responseData;
       if (requestData) {
         responseData = await customFetchFunction(url, {...options, body: JSON.stringify(requestData)});
-        
       } else {
         responseData = await customFetchFunction(url);
       }
       setData(responseData);
+      setError({ isError: false, errorMessage: null });
     } catch (error) {
-      setError({
-        isError: true,
-        errorMessage: error.message
-      });
-      throw new Error(error.message);
+      throw new error(error.message);
     } finally {
       setIsLoading(false);
     }
-
   }, [url, options]);
 
-  useEffect(()=>{
-
+  useEffect(() => {
     if ((options && options.method === 'GET') || (!options)) {
       sendRequest();
-    } 
-    
+    }
   }, [url, options]);
 
   return {

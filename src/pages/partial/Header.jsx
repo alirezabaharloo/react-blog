@@ -2,18 +2,17 @@ import { Link } from 'react-router-dom';
 import { useLocation } from 'react-router-dom';
 import { HEADER_DATA } from '../../data/PAGE_DATAS.jsx';
 import HeaderSearch from '../../components/HeaderSearch.jsx';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useContext } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAuth } from '../../hooks/useAuth.jsx';
+import AuthContext from '../../context/AuthContext.jsx';
 
 const Header = () => {
   const location = useLocation();
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
-  const { user, isAuthenticated, logout, isAdmin } = useAuth();
+  const { user, isAuthenticated, logout, isAdmin } = useContext(AuthContext);
   const userMenuRef = useRef(null);
-  
 
   // Check if we're on mobile based on screen width
   useEffect(() => {
@@ -167,7 +166,12 @@ const Header = () => {
                       <motion.div variants={itemVariants} className="py-1">
                         <Link to="/profile" onClick={() => setShowUserMenu(false)}   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</Link>
                       </motion.div>
-                      
+                      {isAdmin && (
+                        <motion.div variants={itemVariants} className="py-1">
+                          <Link to="/admin" onClick={() => setShowUserMenu(false)}   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Admin Dashboard</Link>
+                        </motion.div>
+                      ) }
+
                       <motion.div variants={itemVariants} className="py-1 border-t border-gray-100">
                         <button 
                           onClick={logout}

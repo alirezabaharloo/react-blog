@@ -16,7 +16,7 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      navigate(-1);
     }
   }, [isAuthenticated, navigate]);
 
@@ -44,6 +44,8 @@ const Login = () => {
       
       if (!result.success) {
         setError(result.error ? result.error[0] : 'Failed to login. Please check your credentials.');
+      } else {
+        navigate("/");
       }
     } catch (err) {
       setError('An error occurred. Please try again.');

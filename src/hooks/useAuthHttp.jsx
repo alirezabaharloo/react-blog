@@ -67,14 +67,19 @@ const useAuthHttp = (url, options = null) => {
     
     const resData = await res.json();
     
-    // If the request is a GET request, return the response data fro handling POST,PUT,PATCH errors
     if (res.status === 400 && requestOptions.method !== 'GET') {
       return {
         isError: true,
         errorMessage: resData
       };
     }
-
+    
+    if (!res.ok) { 
+      setError({
+        isError: true,
+        errorMessage: resData
+      })
+    }
     return resData;
   };
   
@@ -91,6 +96,10 @@ const useAuthHttp = (url, options = null) => {
       setData(responseData);
       return responseData
     } catch (error) {
+      setError({
+        isError: true,
+        errorMessage: error.message
+      })
       throw new Error(error.message);
     } finally {
       setIsLoading(false);

@@ -1,4 +1,5 @@
 import { createContext, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export const SearchContext = createContext({
   searchTerm: '',
@@ -9,10 +10,11 @@ export const SearchContext = createContext({
 });
 
 export const SearchProvider = ({ children }) => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState(null);
   const [isSearching, setIsSearching] = useState(null);
-
+  const [error, setError] = useState(false);
   
   const performSearch = async (term) => {
     if (!term) return;
@@ -22,14 +24,20 @@ export const SearchProvider = ({ children }) => {
 
     try {
       const response = await fetch(`http://localhost:8000/api/blog/articles/search?q=${encodeURIComponent(term)}`);
-      if (!response.ok) {
+
+      const data = await response.json();
+      if (!response.ok && response.status === 404) {
+        console.log(data.error);
+        setError({
+          isError: true,  
+          errorMessage: data.error
+        });
+      } else if (!response.ok) {
         throw new Error('Search failed');
       }
-      const data = await response.json();
       setSearchResults(data);
     } catch (error) {
       console.error('Search error:', error);
-      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
@@ -46,8 +54,10 @@ export const SearchProvider = ({ children }) => {
         searchTerm, 
         searchResults, 
         isSearching, 
-        performSearch, 
-        clearSearch 
+        isError:error.isError,
+        errorMessage:error.errorMessage,
+        performSearch,
+        clearSearch, 
       }}
     >
       {children}

@@ -1,14 +1,12 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useAuth } from '../hooks/useAuth';
 import useAuthHttp from '../hooks/useAuthHttp';
-import SpinLoader from '../components/loaders/SpinLoader';
-import SomethingWentWrong from '../components/errors/SomethingWentWrong';
 import { showSuccessToast, showErrorToast } from '../utils/toastNotifs';
+import { useAuth } from '../hooks/useAuth';
+import { useEffect } from 'react';
 
 const ChangePassword = () => {
-  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     current_password: '',
@@ -22,25 +20,23 @@ const ChangePassword = () => {
     new_password: false,
     confirm_password: false
   });
+  const { isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
 
   // Use useAuthHttp for changing password
   const {
     sendRequest: changePassword,
-    isLoading: isChangingPassword,
-    isError: isChangePasswordError
   } = useAuthHttp('http://localhost:8000/api/auth/change-password/', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json'
     }
   });
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate('/login');
-    }
-  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -149,9 +145,6 @@ const ChangePassword = () => {
     }
   };
 
-  if (isChangePasswordError) {
-    return <SomethingWentWrong />;
-  }
 
   return (
     <motion.div 

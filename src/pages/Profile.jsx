@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import useAuthHttp from '../hooks/useAuthHttp';
 import SpinLoader from '../components/loaders/SpinLoader.jsx';
 import SomethingWentWrong from '../components/errors/SomethingWentWrong.jsx';
-import { showSuccessToast } from '../utils/toastNotifs';
+import { showSuccessToast, showErrorToast } from '../utils/toastNotifs';
+import { useAuth } from '../hooks/useAuth';
 
 const Profile = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     first_name: '',
@@ -15,12 +17,19 @@ const Profile = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errors, setErrors] = useState({});
-  
+  const { isAuthenticated } = useAuth();
+  const [initialProfileData, setInitialProfileData] = useState(null); 
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
+
   const { 
     isLoading: isLoadingProfile,
     isError: isLoadingProfileError,
     data: profileData,
-    sendRequest: fetchProfile
   } = useAuthHttp('http://localhost:8000/api/auth/profile/');
 
   const {
@@ -32,12 +41,14 @@ const Profile = () => {
 
   useEffect(() => {
     if (profileData) {
-      setFormData({
-        username: profileData.username || '',
+      const userProfileData = {
+        username: profileData.username,
         first_name: profileData.first_name || '',
         last_name: profileData.last_name || '',
         email: profileData.email || ''
-      });
+      }
+      setFormData(userProfileData);
+      setInitialProfileData(userProfileData);
     }
   }, [profileData]);
   
@@ -47,13 +58,14 @@ const Profile = () => {
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
+  const isProfileDataChanged = JSON.stringify(formData) !== JSON.stringify(initialProfileData);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
       const updateData = {
-        username: profileData.username,
         ...(formData.first_name.trim() && { first_name: formData.first_name }),
         ...(formData.last_name.trim() && { last_name: formData.last_name }),
         ...(formData.email.trim() && { email: formData.email })
@@ -62,18 +74,27 @@ const Profile = () => {
       const response = await updateProfile(updateData);
       
       if (response?.isError) {
+        
         if (response.errorMessage.hasOwnProperty('email')) {
           setErrors({ email: response.errorMessage.email[0] });
         } else {
           setErrors({
-            'form': response.errorMessage.detail[0] || "An error occurred. Please try again."
+            'form': Object.values(response.errorMessage)[0] || "An error occurred. Please try again."
           });
         }
-      } else {
+      } else { 
+        setInitialProfileData({
+          username: response.username,
+          first_name: response.first_name,
+          last_name: response.last_name,
+          email: response.email
+        });
+        console.log(response);
         showSuccessToast('Profile updated successfully!');
       }
     } catch (error) {
       console.log(error.message)
+      showErrorToast('An error occurred. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -123,13 +144,11 @@ const Profile = () => {
         <h2 className="text-3xl font-bold text-gray-800">Profile Settings</h2>
         <p className="text-gray-600 mt-2">Manage your account information</p>
       </motion.div>
-      {
-        errors.form && (
-          <motion.div variants={itemVariants}>
-            <p className="mt-1 text-sm text-red-600">{errors.form}</p>
-          </motion.div>
-        )
-      }
+      {errors.form && (
+        <motion.div variants={itemVariants}>
+          <p className="mt-1 text-sm text-red-600">{errors.form}</p>
+        </motion.div>
+      )}
 
       <form onSubmit={handleSubmit}>
         <div className="space-y-6">
@@ -149,9 +168,10 @@ const Profile = () => {
             <p className="mt-1 text-sm text-gray-500">Username cannot be changed</p>
           </motion.div>
 
-          {/* First Name */}
-          <motion.div variants={itemVariants}>
-            <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
+         <div className="flex gap-4 w-full max-w-full">
+           {/* First Name */}
+           <motion.div variants={itemVariants} className='w-[50%]'>
+            <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1 ">
               First Name (Optional)
             </label>
             <input
@@ -166,7 +186,7 @@ const Profile = () => {
           </motion.div>
 
           {/* Last Name */}
-          <motion.div variants={itemVariants}>
+          <motion.div variants={itemVariants} className='w-[50%]'>
             <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
               Last Name (Optional)
             </label>
@@ -180,10 +200,11 @@ const Profile = () => {
               placeholder="Enter your last name"
             />
           </motion.div>
+         </div>
 
           {/* Email */}
           <motion.div variants={itemVariants}>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
               Email (Optional)
             </label>
             <input
@@ -201,8 +222,8 @@ const Profile = () => {
           </motion.div>
 
           {/* Password Change Link */}
-          <motion.div variants={itemVariants} className="pt-2">
-            <div className="flex items-center justify-between border-t border-gray-200 pt-4">
+          <motion.div variants={itemVariants}>
+            <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
@@ -225,10 +246,10 @@ const Profile = () => {
           <motion.div variants={itemVariants} className="pt-4">
             <button
               type="submit"
-              disabled={isSubmitting}
-              className={`w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium transition-all duration-200 ${
+              disabled={isSubmitting || !isProfileDataChanged}
+              className={`w-full px-6 py-3 ${isProfileDataChanged ? 'bg-blue-600' : 'bg-gray-400'} text-white cursor-pointer rounded-lg font-medium transition-all duration-200 ${
                 isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-700'
-              }`}
+              } ${isProfileDataChanged ? 'hover:bg-blue-700' : 'hover:cursor-not-allowed hover:bg-gray-400 ' }`}
             >
               {isSubmitting ? (
                 <div className="flex items-center justify-center">

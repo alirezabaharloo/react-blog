@@ -20,7 +20,7 @@ export default function ArticleDetail() {
   }
 
   
-  if (isError && errorMessage.detail === 'Not found.') {
+  if (isError && errorMessage === 'Not found.') {
     return <ArticleNotFound />;
   } else if (isError) {
     return <SomethingWentWrong />;

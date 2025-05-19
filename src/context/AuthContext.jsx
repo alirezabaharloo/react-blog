@@ -1,28 +1,74 @@
 import { createContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-
+import { jwtDecode } from 'jwt-decode';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [tokens, setTokens] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
-  // Load tokens from localStorage on initial render
   useEffect(() => {
     const storedTokens = localStorage.getItem('tokens');
-    const storedUser = localStorage.getItem('user');
-    
-    if (storedTokens && storedUser) {
-      setTokens(JSON.parse(storedTokens));
-      setUser(JSON.parse(storedUser));
-      setIsAuthenticated(true);
+    if (storedTokens) {
+      try {
+        const accessToken = JSON.parse(storedTokens).access;
+        const decodedToken = accessToken ? jwtDecode(accessToken) : null;
+        setIsAuthenticated(!!decodedToken?.user_id);
+      } catch (error) {
+        console.error('Error parsing tokens:', error);
+        localStorage.removeItem('tokens');
+        setIsAuthenticated(false);
+      }
+    } else {
+      setIsAuthenticated(false);
     }
-    setIsLoading(false);
   }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const checkAdminAccess = async () => {
+      try {
+        const storedTokens = localStorage.getItem('tokens');
+        if (!storedTokens || !isAuthenticated) {
+          if (isMounted) setIsAdmin(false);
+          return;
+        }
+
+        const accessToken = JSON.parse(storedTokens).access;
+        const response = await fetch('http://localhost:8000/api/admin/admin-access/', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+
+        if (!isMounted) return;
+
+        if (response.status === 403) {
+          setIsAdmin(false);
+        } else if (response.ok) {
+          setIsAdmin(true);
+        } else {
+          console.error('Failed to check admin access');
+          setIsAdmin(false);
+        }
+      } catch (error) {
+        console.error('Error checking admin access:', error);
+        if (isMounted) setIsAdmin(false);
+      }
+    };
+
+    checkAdminAccess();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [isAuthenticated]);
+
 
   const login = async (username, password) => {
     try {
@@ -42,7 +88,6 @@ export const AuthProvider = ({ children }) => {
       
       // Save tokens to localStorage
       localStorage.setItem('tokens', JSON.stringify({access: data.access, refresh: data.refresh}));
-      setTokens({access: data.access, refresh: data.refresh});
       
       // Set user username in the localStorage
       localStorage.setItem('user', JSON.stringify({username: data.username}));
@@ -57,7 +102,6 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register user
   const register = async (userData) => {
     try {
       const response = await fetch('http://localhost:8000/api/auth/register/', {
@@ -82,49 +126,48 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout user
   const logout = () => {
     localStorage.removeItem('tokens');
     localStorage.removeItem('user');
-    setTokens(null);
     setUser(null);
     setIsAuthenticated(false);
+    setIsAdmin(false);
     navigate('/login');
   };
 
-
   const refreshToken = async () => {
-    const res = await fetch('http://localhost:8000/api/auth/get-refresh-token/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${tokens.access}`
-      },
-    });
-    
-    const data = await res.json();
-    return data;
-  }
+    try {
+      const storedTokens = localStorage.getItem('tokens');
+      if (!storedTokens) {
+        throw new Error('No tokens found');
+      }
 
-
-  const getAuthHeader = () => {
-    return {
-      'Authorization': `Bearer ${tokens.access}`
-    };
-  }
-
+      const accessToken = JSON.parse(storedTokens).access;
+      const res = await fetch('http://localhost:8000/api/auth/get-refresh-token/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`
+        },
+      });
+      
+      const data = await res.json();
+      return data;
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      throw error;
+    }
+  };
 
   return (
     <AuthContext.Provider value={{
       user,
-      tokens,
-      isAuthenticated,
-      isLoading,
       login,
       logout,
       register,
       refreshToken,
-      getAuthHeader,
+      isAuthenticated,
+      isAdmin,
     }}>
       {children}
     </AuthContext.Provider>

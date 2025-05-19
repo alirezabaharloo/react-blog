@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../hooks/useAuth';
-import { useEffect } from 'react';
-
 
 const Register = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -16,14 +15,15 @@ const Register = () => {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
   const [step, setStep] = useState(1);
-  const { register, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+  const { register } = useAuth();
+  const { isAuthenticated } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/');
+      navigate(-1);
     }
   }, [isAuthenticated, navigate]);
+
 
   const handleChange = (e) => {
     const { name, value } = e.target;
