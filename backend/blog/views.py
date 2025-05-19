@@ -46,6 +46,12 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
             Q(content__icontains=search_term)
         ).select_related('category')
         
+        if search_results.count() == 0:
+            return Response(
+                {"error": "No articles found!"}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+
         serializer = ArticleListSerializer(search_results, many=True)
         return Response(serializer.data)
     

@@ -23,6 +23,7 @@ const HeaderSearch = () => {
     document.addEventListener('mousedown', handleClickOutside);
   }, []);
   
+
   // Fetch recommendations when search term changes
   useEffect(() => {
     const fetchRecommendations = async () => {
@@ -32,7 +33,7 @@ const HeaderSearch = () => {
       }
       
       try {
-        const response = await fetch(`http://localhost:8000/articles/search?q=${encodeURIComponent(searchTerm)}`);
+        const response = await fetch(`http://localhost:8000/api/blog/articles/search?q=${encodeURIComponent(searchTerm)}`);
         if (response.ok) {
           const data = await response.json();
           setRecommendations(data.slice(0, 5)); // Limit to 5 suggestions

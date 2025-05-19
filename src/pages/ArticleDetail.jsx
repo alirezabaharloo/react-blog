@@ -10,7 +10,7 @@ import SomethingWentWrong from '../components/errors/SomethingWentWrong';
 export default function ArticleDetail() {
   const { articleId } = useParams();
   
-  const { data, isLoading, isError, errorMessage } = useHttp(`http://localhost:8000/articles/${parseInt(articleId)}`);
+  const { data, isLoading, isError, errorMessage } = useHttp(`http://localhost:8000/api/blog/articles/${parseInt(articleId)}`);
 
   const article = data.article || null;
   const relatedArticles = data.relatedArticles || [];
@@ -18,10 +18,9 @@ export default function ArticleDetail() {
   if (isLoading) {
     return <SpinLoader />;
   }
-  
-  
 
-  if (isError && errorMessage === 'Article not found') {
+  
+  if (isError && errorMessage.detail === 'Not found.') {
     return <ArticleNotFound />;
   } else if (isError) {
     return <SomethingWentWrong />;

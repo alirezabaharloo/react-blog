@@ -5,15 +5,15 @@ import { ArticleContext } from '../context/ArticleContext';
 import SearchContext from '../context/SearchContext';
 import SomethingWentWrong from '../components/errors/SomethingWentWrong';
 import SpinLoader from '../components/loaders/SpinLoader';
-import SearchBox from '../components/SearchBox';
 import useHttp from '../hooks/useHttp';
 import { motion } from 'framer-motion';
+import ArticleNotFound from '../components/errors/ArticleNotFound';
 
 export default function ArticlesWithPagination() {
   const location = useLocation();
   const { setArticleData } = useContext(ArticleContext);
-  const { searchTerm, searchResults, isSearching, performSearch, clearSearch } = useContext(SearchContext);
-  const { data: articles, isLoading, isError } = useHttp('http://localhost:8000/articles');
+  const { searchTerm, searchResults, isSearching, clearSearch, errorMessage, isError: isSearchError } = useContext(SearchContext);
+  const { data: articles, isLoading, isError } = useHttp('http://localhost:8000/api/blog/articles');
   const [visibleArticles, setVisibleArticles] = useState(6);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
@@ -43,27 +43,28 @@ export default function ArticlesWithPagination() {
     }, 800);
   };
 
-  if (isLoading) {
-    return <SpinLoader />;
-  }
-
-  if (isError) {
-    return <SomethingWentWrong />;
-  }
-
-  // Determine which articles to display
-  // Priority: 1. Global search results, 2. Local search results, 3. All articles
-  const displayArticles = searchResults.length > 0 
+  const displayArticles = searchResults?.length > 0 
     ? searchResults 
-      : articles;
+    : articles;
   
-  // Get only the visible articles (unless searching)
-  const displayedArticles = searchResults.length > 0  
+  const displayedArticles = searchResults?.length > 0  
     ? displayArticles 
     : displayArticles ? displayArticles.slice(0, visibleArticles) : [];
     
-  const hasMoreArticles = !searchResults.length  && articles && visibleArticles < articles.length;
-  const isShowingSearchResults = searchResults.length > 0;
+  const hasMoreArticles = !searchResults?.length && articles && visibleArticles < articles.length;
+  const isShowingSearchResults = searchResults?.length > 0;
+
+  if (isSearchError && errorMessage == "No articles found!") {
+    return <ArticleNotFound notFoundedArticleTitle={searchTerm} />;
+  }
+
+  if (isLoading || isSearching) {
+    return <SpinLoader />;
+  }
+
+  if (isError || isSearchError) {
+    return <SomethingWentWrong />;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -117,44 +118,25 @@ export default function ArticlesWithPagination() {
       )}
     
       
-      {/* Loading Search Results */}
-      {(isSearching ) ? (
-        <div className="flex justify-center items-center py-20">
-          <SpinLoader />
-        </div>
-      ) : displayedArticles.length === 0 ? (
-        <motion.div 
-          className="text-center py-20"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-        >
-          <svg className="w-16 h-16 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 className="mt-4 text-xl font-medium text-gray-700">No articles found</h3>
-          <p className="mt-2 text-gray-500">Try searching with different keywords</p>
-        </motion.div>
-      ) : (
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          layout
-        >
-          {displayedArticles.map((article, index) => (
-            <motion.div
-              key={article.id}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ 
-                duration: 0.5, 
-                delay: index < visibleArticles - 6 ? 0.1 * (index % 6) : 0.1 * (index % 6) + 0.5
-              }}
-              layout
-            >
-              <ArticleCart article={article} index={index} />
-            </motion.div>
-          ))}
-        </motion.div>
-      )}
+      <motion.div 
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+        layout
+      >
+        {displayedArticles.map((article, index) => (
+          <motion.div
+            key={article.id}
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ 
+              duration: 0.5, 
+              delay: index < visibleArticles - 6 ? 0.1 * (index % 6) : 0.1 * (index % 6) + 0.5
+            }}
+            layout
+          >
+            <ArticleCart article={article} index={index} />
+          </motion.div>
+        ))}
+      </motion.div>
       
       {/* Load More Button */}
       {hasMoreArticles && (
