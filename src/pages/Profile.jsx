@@ -35,7 +35,7 @@ const Profile = () => {
   const {
     sendRequest: updateProfile
   } = useAuthHttp('http://localhost:8000/api/auth/profile/', {
-    method: 'PUT',
+    method: 'PATCH',
     headers: { 'Content-Type': 'application/json' }
   });
 

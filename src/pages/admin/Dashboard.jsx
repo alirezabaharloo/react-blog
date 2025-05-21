@@ -3,18 +3,32 @@ import { motion } from 'framer-motion';
 import useAuthHttp from '../../hooks/useAuthHttp';
 import SpinLoader from '../../components/loaders/SpinLoader';
 import AdminSomethingWentWrong from '../../components/admin/errors/AdminSomethingWentWrong';
+import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  
   const { 
-    isLoading,
-    isError,
-    errorMessage,
+    isLoading: statsLoading,
+    isError: statsError,
+    errorMessage: statsErrorMessage,
     data: stats,
   } = useAuthHttp('http://localhost:8000/api/admin/stats/');
 
+  const {
+    isLoading: profileLoading,
+    isError: profileError,
+    errorMessage: profileErrorMessage,
+    data: profile,
+  } = useAuthHttp('http://localhost:8000/api/auth/profile/');
 
-  if (isLoading || !stats) {
+
+  if (statsLoading || profileLoading || !stats || !profile) {
     return <SpinLoader />;
+  }
+
+  if (statsError || profileError) {
+    return <AdminSomethingWentWrong message={statsErrorMessage || profileErrorMessage} />;
   }
 
   const containerVariants = {

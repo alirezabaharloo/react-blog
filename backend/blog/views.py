@@ -19,7 +19,7 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
     """
     API endpoint for retrieving articles
     """
-    queryset = Article.objects.all().select_related('category')
+    queryset = Article.objects.filter(status='published').select_related('category')
     
     def get_serializer_class(self):
         if self.action == 'list':

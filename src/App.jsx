@@ -14,6 +14,8 @@ import { AuthProvider } from './context/AuthContext';
 import { BlogRoutes } from './routes';
 import AdminLayout from './layouts/AdminLayout.jsx';
 import Dashboard from './pages/admin/Dashboard.jsx';
+import Users from './pages/admin/Users.jsx';
+import UserDetail from './pages/admin/UserDetail.jsx';
 import AdminPageNotFound from './components/admin/errors/AdminPageNotFound.jsx';
 
 
@@ -39,6 +41,8 @@ function App() {
               {/* Admin Routes */}
               <Route path="/admin/*" element={<AdminLayout />}>
                 <Route index element={<Dashboard />} />
+                <Route path="users" element={<Users />} />
+                <Route path="users/:id" element={<UserDetail />} />
                 <Route path="*" element={<AdminPageNotFound />} />
               </Route>
             </Routes>

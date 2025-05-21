@@ -4,6 +4,8 @@ from rest_framework.response import Response
 from django.contrib.auth.models import User
 from blog.models import Article, Category
 from rest_framework import status
+from rest_framework import generics, permissions
+from .serializers import *
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -30,3 +32,39 @@ def get_stats(request):
     }
     
     return Response(stats) 
+
+
+class AdminUserListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = AdminUserSerializer
+    queryset = User.objects.all()
+
+    def get_queryset(self):
+        return User.objects.all().order_by('-date_joined')
+
+
+class AdminUserDetailView(generics.RetrieveUpdateAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = AdminUserSerializer
+    queryset = User.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        serializer = self.get_serializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminUserDeactivateView(generics.UpdateAPIView):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = AdminUserSerializer
+    queryset = User.objects.all()
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        user.is_active = not user.is_active
+        user.save()
+        serializer = self.get_serializer(user)
+        return Response(serializer.data)

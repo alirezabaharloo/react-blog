@@ -3,7 +3,7 @@ from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
-from .serializers import UserSerializer, RegisterSerializer, UserProfileSerializer, ChangePasswordSerializer
+from .serializers import *
 from django.contrib.auth.models import User
 
 # Create your views here.
@@ -28,7 +28,9 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = UserProfileSerializer
     
     def get_object(self):
+        print(self.request.data)
         return User.objects.get(id=self.request.user.id)
+    
 
 
 class ChangePasswordView(generics.UpdateAPIView):

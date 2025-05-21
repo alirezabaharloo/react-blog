@@ -47,22 +47,26 @@ const useAuthHttp = (url, options = null) => {
     };
     let res = await fetch(url, requestOptions);
     
-    if (res.status === 401) {
-      // Try to refresh the token
-      const refreshSuccess = await handleUnauthorized();
-      if (refreshSuccess) {
-        // Retry the original request with new token
-        const newOptions = {
-          ...requestOptions,
-          headers: {
-            ...requestOptions.headers,
-            ...getAuthHeader()
-          }   
-        };
-        res = await fetch(url, newOptions);
-      } else {
-        throw new Error('Authentication failed');
-      }
+    // if (res.status === 401) {
+    //   // Try to refresh the token
+    //   const refreshSuccess = await handleUnauthorized();
+    //   if (refreshSuccess) {
+    //     // Retry the original request with new token
+    //     const newOptions = {
+    //       ...requestOptions,
+    //       headers: {
+    //         ...requestOptions.headers,
+    //         ...getAuthHeader()
+    //       }   
+    //     };
+    //     res = await fetch(url, newOptions);
+    //   } else {
+    //     throw new Error('Authentication failed');
+    //   }
+    // }
+    
+    if (res.status === 401){
+      logout();
     }
     
     const resData = await res.json();
@@ -80,6 +84,7 @@ const useAuthHttp = (url, options = null) => {
         errorMessage: resData
       })
     }
+    
     return resData;
   };
   
@@ -94,7 +99,9 @@ const useAuthHttp = (url, options = null) => {
         responseData = await customFetchFunction(url, options);
       }
       setData(responseData);
-      return responseData
+      
+      return responseData      
+
     } catch (error) {
       setError({
         isError: true,

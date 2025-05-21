@@ -32,13 +32,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'password']
 
     def validate_email(self, value):
         if User.objects.filter(email=value).exclude(id=self.instance.id).exists():
             raise serializers.ValidationError("User with this Email already exists!")
         return value
-
+        
+    
 
 class ChangePasswordSerializer(serializers.Serializer):
     current_password = serializers.CharField(required=True)

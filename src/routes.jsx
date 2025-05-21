@@ -1,6 +1,7 @@
 import { Routes, Route, useLocation } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 
+
 // blog pages
 import Home from './pages/Home';
 import Articles from './pages/Articles';
@@ -15,8 +16,8 @@ import PageTransition from './components/PageTransition';
 import Error from './pages/Error';
 import Dashboard from './pages/admin/Dashboard';
 import AdminPageNotFound from './components/admin/errors/AdminPageNotFound';
-
-
+import Users from './pages/admin/Users';
+import AdminLayout from './layouts/AdminLayout';
 
 const BlogRoutes = () => {
     const location = useLocation();
@@ -86,10 +87,11 @@ const BlogRoutes = () => {
 
 const AdminRoutes = () => {
   return (
-    <>
+    <Route path="/admin/*" element={<AdminLayout />}>
       <Route index element={<Dashboard />} />
-      <Route path="/admin/*" element={<AdminPageNotFound />} />
-    </>
+      <Route path="users" element={<Users />} />
+      <Route path="*" element={<AdminPageNotFound />} />
+    </Route>
   );
 }
 
