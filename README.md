@@ -74,10 +74,7 @@ This project consists of two parts: the frontend (React) and the backend (Django
 
 ### Frontend Setup
 
-1. Navigate to the frontend directory
-   ```bash
-   cd ../frontend
-   ```
+1. Navigate to the root directory
 
 2. Install dependencies
    ```bash
