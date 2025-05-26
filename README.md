@@ -41,8 +41,8 @@ This project consists of two parts: the frontend (React) and the backend (Django
 
 1. Clone the repository
    ```bash
-   git clone https://github.com/yourusername/news-portal.git
-   cd news-portal/backend
+   git clone [https://github.com/yourusername/news-portal.git](https://github.com/alirezabaharloo/react-blog.git)
+   cd react-blog/backend
    ```
 
 2. Create and activate a virtual environment
