@@ -17,6 +17,12 @@ import Dashboard from './pages/admin/Dashboard.jsx';
 import Users from './pages/admin/Users.jsx';
 import UserDetail from './pages/admin/UserDetail.jsx';
 import AdminPageNotFound from './components/admin/errors/AdminPageNotFound.jsx';
+import Categories from './pages/admin/Categories.jsx';
+import CategoryDetail from './pages/admin/CategoryDetail.jsx';
+import Articles from './pages/admin/Articles.jsx';
+import ArticleDetail from './pages/admin/ArticleDetail.jsx';
+import CreateCategory from './pages/admin/CategoryCreate.jsx'
+import CreateArticle from './pages/admin/ArticleCreate.jsx'
 
 
 function App() {
@@ -43,6 +49,12 @@ function App() {
                 <Route index element={<Dashboard />} />
                 <Route path="users" element={<Users />} />
                 <Route path="users/:id" element={<UserDetail />} />
+                <Route path="categories" element={<Categories />} />
+                <Route path="categories/new" element={<CreateCategory />} />
+                <Route path="categories/:id" element={<CategoryDetail />} />
+                <Route path="articles" element={<Articles />} />
+                <Route path="articles/new" element={<CreateArticle />} />
+                <Route path="articles/:id" element={<ArticleDetail />} />
                 <Route path="*" element={<AdminPageNotFound />} />
               </Route>
             </Routes>

@@ -42,7 +42,8 @@ const useAuthHttp = (url, options = null) => {
       ...options,                                         
       headers: {
         ...options?.headers,
-        "Authorization": `Bearer ${JSON.parse(localStorage.getItem('tokens'))?.access}`
+        "Authorization": `Bearer ${JSON.parse(localStorage.getItem('tokens'))?.access}`,
+        'Content-Type': 'application/json',
       }
     };
     let res = await fetch(url, requestOptions);
@@ -99,6 +100,7 @@ const useAuthHttp = (url, options = null) => {
         responseData = await customFetchFunction(url, options);
       }
       setData(responseData);
+      console.log(responseData);
       
       return responseData      
 

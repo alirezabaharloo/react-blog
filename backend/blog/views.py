@@ -2,17 +2,28 @@ from django.db.models import Q
 from rest_framework import viewsets, status
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
+from rest_framework.permissions import IsAdminUser
 
 from .models import Category, Article
 from .serializers import CategorySerializer, ArticleSerializer, ArticleListSerializer
+from rest_framework.views import APIView
 
-
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+class CategoryViewSet(viewsets.ModelViewSet):
     """
     API endpoint for retrieving categories
     """
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+
+    def get_permissions(self):
+        """
+        Allow read-only access to anyone, but require admin permissions for write operations
+        """
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            permission_classes = [IsAdminUser]
+        else:
+            permission_classes = []
+        return [permission() for permission in permission_classes]
 
 
 class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
@@ -77,4 +88,6 @@ class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
         return Response({
             'article': serializer.data,
             'relatedArticles': related_serializer.data
-        }) 
+        })
+
+

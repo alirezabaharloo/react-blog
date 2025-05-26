@@ -8,6 +8,13 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+    def validate_name(self, value):
+        
+        if Category.objects.filter(name=value).exists():
+            raise serializers.ValidationError("category with this title already exists!")
+
+        return value
+
 class ArticleSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     author = serializers.SerializerMethodField()

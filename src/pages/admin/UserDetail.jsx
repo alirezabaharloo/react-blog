@@ -283,7 +283,7 @@ const UserDetail = () => {
             disabled={isSubmitting || !isDataChanged}
             className={`px-6 py-2 ${isDataChanged ? 'bg-blue-600' : 'bg-gray-400'} text-white rounded-md font-medium transition-all duration-200 ${
               isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-700'
-            } ${isDataChanged ? 'hover:bg-blue-700' : 'hover:cursor-not-allowed'}`}
+            } ${isDataChanged ? 'hover:bg-blue-700' : 'hover:cursor-not-allowed hover:bg-gray-400'}`}
           >
             {isSubmitting ? (
               <div className="flex items-center justify-center">

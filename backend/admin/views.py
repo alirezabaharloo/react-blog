@@ -6,6 +6,7 @@ from blog.models import Article, Category
 from rest_framework import status
 from rest_framework import generics, permissions
 from .serializers import *
+from rest_framework.views import APIView
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
@@ -35,18 +36,23 @@ def get_stats(request):
 
 
 class AdminUserListView(generics.ListAPIView):
-    permission_classes = [permissions.IsAdminUser]
+    """
+    Returns a list of all users for admin panel
+    """
     serializer_class = AdminUserSerializer
-    queryset = User.objects.all()
-
+    permission_classes = [IsAdminUser]
+    
     def get_queryset(self):
         return User.objects.all().order_by('-date_joined')
 
 
 class AdminUserDetailView(generics.RetrieveUpdateAPIView):
-    permission_classes = [permissions.IsAdminUser]
-    serializer_class = AdminUserSerializer
+    """
+    Get and update user details
+    """
     queryset = User.objects.all()
+    serializer_class = AdminUserSerializer
+    permission_classes = [IsAdminUser]
 
     def update(self, request, *args, **kwargs):
         user = self.get_object()
@@ -58,13 +64,73 @@ class AdminUserDetailView(generics.RetrieveUpdateAPIView):
 
 
 class AdminUserDeactivateView(generics.UpdateAPIView):
-    permission_classes = [permissions.IsAdminUser]
-    serializer_class = AdminUserSerializer
+    """
+    Toggle user active status
+    """
     queryset = User.objects.all()
-
-    def update(self, request, *args, **kwargs):
+    serializer_class = AdminUserSerializer
+    permission_classes = [IsAdminUser]
+    
+    def patch(self, request, *args, **kwargs):
         user = self.get_object()
         user.is_active = not user.is_active
         user.save()
-        serializer = self.get_serializer(user)
-        return Response(serializer.data)
+        return Response({'status': 'success'})
+
+class AdminCategoryListView(generics.ListCreateAPIView): # Changed from ListAPIView
+    """
+    Returns a list of all categories for admin panel and allows creation of new categories
+    """
+    serializer_class = AdminCategorySerializer
+    permission_classes = [IsAdminUser]
+    
+    def get_queryset(self):
+        return Category.objects.all().order_by('name')
+
+class AdminCategoryDetailView(generics.RetrieveUpdateAPIView):
+    """
+    Get and update category details
+    """
+    queryset = Category.objects.all()
+    serializer_class = AdminCategorySerializer
+    permission_classes = [IsAdminUser]
+    
+class AdminArticleListView(generics.ListCreateAPIView):
+    """
+    Returns a list of all articles for admin panel and allows creation of new articles
+    """
+    serializer_class = AdminArticleSerializer
+    permission_classes = [IsAdminUser]
+    
+    def get_queryset(self):
+        return Article.objects.all().select_related('category', 'author').order_by('-created_at')
+    
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+class AdminArticleDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Get, update and delete article details
+    """
+    queryset = Article.objects.all().select_related('category', 'author')
+    serializer_class = AdminArticleSerializer
+    permission_classes = [IsAdminUser]
+    
+    def perform_update(self, serializer):
+        serializer.save()
+        
+
+class AdminArticlePublishView(APIView):
+    """
+    API endpoint for publishing articles
+    """
+    permission_classes = [IsAdminUser]
+
+    def patch(self, request, *args, **kwargs):
+        """
+        Publish an article
+        """
+        article = Article.objects.get(id=kwargs['pk'])
+        article.status = 'published' if article.status == 'draft' else 'draft'
+        article.save()
+        return Response({"message": "article status changed successfully!"}, status=status.HTTP_200_OK)

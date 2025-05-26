@@ -100,6 +100,16 @@ const AdminLayout = () => {
               </svg>
             </button>
           </div>
+          
+          {/* Return to Website Button */}
+          <Link to="/"
+            className="mt-4 flex items-center justify-center w-full py-2 px-4 bg-gradient-to-r from-indigo-500 to-blue-600 text-white rounded-lg shadow-md hover:from-indigo-600 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7m-7-7v14" />
+            </svg>
+            Return to Website
+          </Link>
         </motion.div>
       </motion.div>
 

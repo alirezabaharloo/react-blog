@@ -29,15 +29,5 @@ export const articles = [
     category: "Design",
     image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&auto=format&fit=crop"
   },
-  {
-    id: 4,
-    title: "Building Scalable Applications",
-    excerpt: "Best practices and strategies for creating applications that can grow with your business.",
-    author: "David Brown",
-    date: "2024-03-12",
-    readTime: "7 min read",
-    category: "Architecture",
-    image: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop"
-  }
 ];
 
